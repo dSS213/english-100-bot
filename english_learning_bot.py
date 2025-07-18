@@ -1,4 +1,3 @@
-
 import os
 import json
 import random
@@ -14,9 +13,9 @@ BOT_TOKEN = os.getenv("BOT_TOKEN")
 GOOGLE_SHEET_NAME = os.getenv("GOOGLE_SHEET_NAME")
 
 VIDEOS_BY_LEVEL = {
-    "A1": ["https://www.youtube.com/watch?v=A1Video1"],
-    "A2": ["https://www.youtube.com/watch?v=A2Video1"],
-    "B1": ["https://www.youtube.com/watch?v=B1Video1"],
+    "A1": ["https://www.youtube.com/watch?v=A1Video1", "https://www.youtube.com/watch?v=A1Video2"],
+    "A2": ["https://www.youtube.com/watch?v=A2Video1", "https://www.youtube.com/watch?v=A2Video2"],
+    "B1": ["https://www.youtube.com/watch?v=B1Video1", "https://www.youtube.com/watch?v=B1Video2"],
 }
 
 def get_sheet():
@@ -43,8 +42,8 @@ def save_progress(progress):
     sheet.append_row([
         progress["day"],
         progress["level"],
-        progress["history"][-1]["video"],
-        progress["passed_tests"],
+        json.dumps(progress["history"]),
+        progress["passed_tests"]
     ])
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -57,12 +56,14 @@ async def lesson(update: Update, context: ContextTypes.DEFAULT_TYPE):
     video = random.choice(VIDEOS_BY_LEVEL[level])
     progress["day"] += 1
     progress["history"].append({"day": day, "video": video, "level": level})
+    
     if day % 10 == 0:
         progress["passed_tests"] += 1
         if progress["passed_tests"] == 1:
             progress["level"] = "A2"
         elif progress["passed_tests"] == 2:
             progress["level"] = "B1"
+    
     save_progress(progress)
     await update.message.reply_text(f"Day {day}, Level {level}, Video: {video}")
 
@@ -74,4 +75,9 @@ if __name__ == "__main__":
     application = ApplicationBuilder().token(BOT_TOKEN).build()
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("lesson", lesson))
-    application.run_webhook(listen="0.0.0.0", port=8080, webhook_url=os.getenv("RENDER_EXTERNAL_URL"))
+
+    application.run_webhook(
+        listen="0.0.0.0",
+        port=8080,
+        webhook_url=f"https://{os.environ.get('RENDER_EXTERNAL_HOSTNAME')}/{BOT_TOKEN}"
+    )
