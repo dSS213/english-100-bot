@@ -3,9 +3,9 @@ import json
 import random
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
-from flask import Flask, request
+from flask import Flask
 from telegram import Update
-from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, Dispatcher
+from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 
 app_flask = Flask(__name__)
 
@@ -65,20 +65,17 @@ async def lesson(update: Update, context: ContextTypes.DEFAULT_TYPE):
     save_progress(progress)
     await update.message.reply_text(f"Day {day}, Level {level}, Video: {video}")
 
-application = ApplicationBuilder().token(BOT_TOKEN).build()
-application.add_handler(CommandHandler("start", start))
-application.add_handler(CommandHandler("lesson", lesson))
-
-@app_flask.route("/")
-def index():
-    return "Bot is running!"
-
-@app_flask.route(f"/webhook/{BOT_TOKEN}", methods=["POST"])
-def webhook():
-    update = Update.de_json(request.get_json(force=True), application.bot)
-    return application.process_update(update)
-
 if __name__ == "__main__":
+    application = ApplicationBuilder().token(BOT_TOKEN).build()
+    application.add_handler(CommandHandler("start", start))
+    application.add_handler(CommandHandler("lesson", lesson))
+
     webhook_url = f"https://{os.environ.get('RENDER_EXTERNAL_HOSTNAME')}/webhook/{BOT_TOKEN}"
-    application.bot.set_webhook(url=webhook_url)
-    app_flask.run(host="0.0.0.0", port=8080)
+
+    application.run_webhook(
+        listen="0.0.0.0",
+        port=8080,
+        webhook_path=f"/webhook/{BOT_TOKEN}",
+        webhook_url=webhook_url
+    )
+
