@@ -75,12 +75,11 @@ def index():
 
 @app_flask.route(f"/webhook/{BOT_TOKEN}", methods=["POST"])
 def webhook():
-    update_data = request.get_json(force=True)
-    update = Update.de_json(update_data, application.bot)
-    application.create_task(application.process_update(update))
+    update = Update.de_json(request.get_json(force=True), application.bot)
+    application.update_queue.put(update)  # ✅ الطريقة الصحيحة
     return "ok"
 
 if __name__ == "__main__":
     webhook_url = f"https://{os.environ.get('RENDER_EXTERNAL_HOSTNAME')}/webhook/{BOT_TOKEN}"
     application.bot.set_webhook(url=webhook_url)
-    app_flask.run(host="0.0.0.0", port=8080)
+    app_flask.run(host="0.0.0.0", port=10000)
