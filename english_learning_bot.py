@@ -74,10 +74,12 @@ def index():
     return "Bot is running!"
 
 @app_flask.route(f"/webhook/{BOT_TOKEN}", methods=["POST"])
-def webhook():
-    update = Update.de_json(request.get_json(force=True), application.bot)
-    application.process_update(update)   # ✅ الصحيح في PTB 20+
+async def webhook():
+    data = request.get_json(force=True)
+    update = Update.de_json(data, application.bot)
+    await application.update_queue.put(update)  # ✅ هذا هو الصحيح
     return "ok"
+
 if __name__ == "__main__":
     webhook_url = f"https://{os.environ.get('RENDER_EXTERNAL_HOSTNAME')}/webhook/{BOT_TOKEN}"
     application.bot.set_webhook(url=webhook_url)
