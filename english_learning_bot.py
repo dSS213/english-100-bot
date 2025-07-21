@@ -46,28 +46,9 @@ def save_progress(progress):
         progress["passed_tests"]
     ])
 
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Welcome to the 100 Days English Challenge! Use /lesson to get today's video.")
-
-async def lesson(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    progress = load_progress()
-    day = progress["day"]
-    level = progress["level"]
-    video = random.choice(VIDEOS_BY_LEVEL[level])
-    progress["day"] += 1
-    progress["history"].append({"day": day, "video": video, "level": level})
-    if day % 10 == 0:
-        progress["passed_tests"] += 1
-        if progress["passed_tests"] == 1:
-            progress["level"] = "A2"
-        elif progress["passed_tests"] == 2:
-            progress["level"] = "B1"
-    save_progress(progress)
-    await update.message.reply_text(f"Day {day}, Level {level}, Video: {video}")
-
 application = ApplicationBuilder().token(BOT_TOKEN).build()
-application.add_handler(CommandHandler("start", start))
-application.add_handler(CommandHandler("lesson", lesson))
+application.add_handler(CommandHandler("start", start := start))
+application.add_handler(CommandHandler("lesson", lesson := lesson))
 
 @app_flask.route("/", methods=["GET"])
 def index():
@@ -77,10 +58,11 @@ def index():
 async def webhook():
     data = request.get_json(force=True)
     update = Update.de_json(data, application.bot)
-    await application.update_queue.put(update)  # ✅ هذا هو الصحيح
+    await application.update_queue.put(update)
     return "ok"
 
-if __name__ == "__main__":
+# تعيين webhook عند بداية التشغيل
+@app_flask.before_first_request
+def setup_webhook():
     webhook_url = f"https://{os.environ.get('RENDER_EXTERNAL_HOSTNAME')}/webhook/{BOT_TOKEN}"
     application.bot.set_webhook(url=webhook_url)
-    app_flask.run(host="0.0.0.0", port=10000)
