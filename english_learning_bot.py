@@ -5,7 +5,7 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 from flask import Flask, request
 from telegram import Update
-from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
+from telegram.ext import Application, CommandHandler, ContextTypes
 
 app_flask = Flask(__name__)
 
@@ -46,9 +46,30 @@ def save_progress(progress):
         progress["passed_tests"]
     ])
 
-application = ApplicationBuilder().token(BOT_TOKEN).build()
-application.add_handler(CommandHandler("start", start := start))
-application.add_handler(CommandHandler("lesson", lesson := lesson))
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("Welcome to the 100 Days English Challenge! Use /lesson to get today's video.")
+
+async def lesson(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    progress = load_progress()
+    day = progress["day"]
+    level = progress["level"]
+    video = random.choice(VIDEOS_BY_LEVEL[level])
+    progress["day"] += 1
+    progress["history"].append({"day": day, "video": video, "level": level})
+    if day % 10 == 0:
+        progress["passed_tests"] += 1
+        if progress["passed_tests"] == 1:
+            progress["level"] = "A2"
+        elif progress["passed_tests"] == 2:
+            progress["level"] = "B1"
+    save_progress(progress)
+    await update.message.reply_text(f"Day {day}, Level {level}, Video: {video}")
+
+# أنشئ التطبيق بدون .build()
+application = Application.builder().token(BOT_TOKEN).build()
+
+application.add_handler(CommandHandler("start", start))
+application.add_handler(CommandHandler("lesson", lesson))
 
 @app_flask.route("/", methods=["GET"])
 def index():
@@ -61,7 +82,6 @@ async def webhook():
     await application.update_queue.put(update)
     return "ok"
 
-# تعيين webhook عند بداية التشغيل
 @app_flask.before_first_request
 def setup_webhook():
     webhook_url = f"https://{os.environ.get('RENDER_EXTERNAL_HOSTNAME')}/webhook/{BOT_TOKEN}"
