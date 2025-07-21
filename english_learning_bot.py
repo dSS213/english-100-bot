@@ -76,7 +76,7 @@ def index():
 @app_flask.route(f"/webhook/{BOT_TOKEN}", methods=["POST"])
 def webhook():
     update = Update.de_json(request.get_json(force=True), application.bot)
-    application.update_queue.put(update)  # ✅ الطريقة الصحيحة
+    application.process_update(update)   # ✅ الصحيح في PTB 20+
     return "ok"
 
 if __name__ == "__main__":
