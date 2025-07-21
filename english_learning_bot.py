@@ -69,21 +69,16 @@ application = ApplicationBuilder().token(BOT_TOKEN).build()
 application.add_handler(CommandHandler("start", start))
 application.add_handler(CommandHandler("lesson", lesson))
 
-@app_flask.route("/")
+@app_flask.route("/", methods=["GET"])
 def index():
     return "Bot is running!"
 
 @app_flask.route(f"/webhook/{BOT_TOKEN}", methods=["POST"])
 def webhook():
-    data = request.get_json(force=True)
-    update = Update.de_json(data, application.bot)
-    application.create_task(application.process_update(update))  # ✅ الطريقة الصحيحة في PTB 20+
+    update = Update.de_json(request.get_json(force=True), application.bot)
+    application.process_update(update)   # ✅ الصحيح في PTB 20+
     return "ok"
-
 if __name__ == "__main__":
     webhook_url = f"https://{os.environ.get('RENDER_EXTERNAL_HOSTNAME')}/webhook/{BOT_TOKEN}"
-    application.run_webhook(
-        listen="0.0.0.0",
-        port=10000,
-        webhook_url=webhook_url,
-    )
+    application.bot.set_webhook(url=webhook_url)
+    app_flask.run(host="0.0.0.0", port=10000)
