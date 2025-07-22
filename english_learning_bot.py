@@ -1,7 +1,6 @@
 import os
 import json
 import random
-import asyncio
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 from flask import Flask, request
@@ -63,24 +62,4 @@ async def lesson(update: Update, context: ContextTypes.DEFAULT_TYPE):
             progress["level"] = "A2"
         elif progress["passed_tests"] == 2:
             progress["level"] = "B1"
-    save_progress(progress)
-    await update.message.reply_text(f"Day {day}, Level {level}, Video: {video}")
-
-application = ApplicationBuilder().token(BOT_TOKEN).build()
-application.add_handler(CommandHandler("start", start))
-application.add_handler(CommandHandler("lesson", lesson))
-
-@app_flask.route("/", methods=["GET"])
-def index():
-    return "Bot is running!"
-
-@app_flask.route(f"/webhook/{BOT_TOKEN}", methods=["POST"])
-async def webhook():
-    update = Update.de_json(request.get_json(force=True), application.bot)
-    await application.process_update(update)
-    return "ok"
-
-if __name__ == "__main__":
-    webhook_url = f"https://{os.environ.get('RENDER_EXTERNAL_HOSTNAME')}/webhook/{BOT_TOKEN}"
-    asyncio.run(application.bot.set_webhook(url=webhook_url))
-    app_flask.run(host="0.0.0.0", port=10000)
+   
