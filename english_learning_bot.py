@@ -1,11 +1,12 @@
 import os
 import json
 import random
+import asyncio
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 from flask import Flask, request
 from telegram import Update
-from telegram.ext import Application, CommandHandler, ContextTypes
+from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 
 app_flask = Flask(__name__)
 
@@ -65,9 +66,7 @@ async def lesson(update: Update, context: ContextTypes.DEFAULT_TYPE):
     save_progress(progress)
     await update.message.reply_text(f"Day {day}, Level {level}, Video: {video}")
 
-# أنشئ التطبيق بدون .build()
-application = Application.builder().token(BOT_TOKEN).build()
-
+application = ApplicationBuilder().token(BOT_TOKEN).build()
 application.add_handler(CommandHandler("start", start))
 application.add_handler(CommandHandler("lesson", lesson))
 
@@ -77,12 +76,11 @@ def index():
 
 @app_flask.route(f"/webhook/{BOT_TOKEN}", methods=["POST"])
 async def webhook():
-    data = request.get_json(force=True)
-    update = Update.de_json(data, application.bot)
-    await application.update_queue.put(update)
+    update = Update.de_json(request.get_json(force=True), application.bot)
+    await application.process_update(update)
     return "ok"
 
-@app_flask.before_first_request
-def setup_webhook():
+if __name__ == "__main__":
     webhook_url = f"https://{os.environ.get('RENDER_EXTERNAL_HOSTNAME')}/webhook/{BOT_TOKEN}"
-    application.bot.set_webhook(url=webhook_url)
+    asyncio.run(application.bot.set_webhook(url=webhook_url))
+    app_flask.run(host="0.0.0.0", port=10000)
