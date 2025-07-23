@@ -1,20 +1,33 @@
-🎯 برومبت المشروع:
-أنشئ بوت تيليغرام لتعليم الإنجليزية خلال 100 يوم، يبدأ من المستوى A1 ويتقدم تدريجيًا إلى A2 ثم B1. يجب أن يقوم البوت تلقائيًا بإرسال فيديو تعليمي يومي حسب مستوى المستخدم، مع تتبع التقدم في Google Sheets، حيث يُسجل: اليوم الحالي، المستوى، الفيديوهات السابقة، وعدد الاختبارات المجتازة. كل 10 أيام، ينتقل المستخدم تلقائيًا إلى المستوى التالي دون تدخل يدوي.
+# 🧠 English 100 Bot — Telegram Bot for Learning English in 100 Days
 
-✅ المواصفات التقنية:
+## 🎯 Idea
+This Telegram bot helps users learn English over 100 days. It sends a daily video based on the user's level, starting from A1 and automatically progressing to A2 and B1 every 10 days.
 
-استخدم مكتبة python-telegram-bot الإصدار 20+ (بدون Updater أو update_queue).
+## ✅ Features
+- Sends a **daily educational video**.
+- Tracks user progress using **Google Sheets**:
+  - Day number
+  - Current level
+  - Video history
+  - Number of passed tests
+- **Automatically increases level** every 10 days if user passes the test.
+- **Persistent progress**: does not reset if bot restarts or moves to another server/device.
 
-استعمل ApplicationBuilder وapplication.process_update(update) لمعالجة التحديثات.
+## ⚙️ Technical Stack
+- `python-telegram-bot` v20+ (no `Updater`, no `update_queue`)
+- `application.process_update(update)` for Webhook support
+- **Flask** for Webhook server
+- **Render.com** for cloud deployment using `gunicorn`
+- **Google Sheets API** via `gspread` and `oauth2client` for progress storage
 
-نفّذ Webhook باستخدام Flask.
+## 🚫 Common Issues Solved
+- Fixed bugs caused by mixing old PTB code (`Updater`, `update_queue`) with version 20+.
+- Ensured full Webhook compatibility for cloud deployment.
 
-استضف البوت على Render وشغله باستخدام gunicorn.
+## 🔐 Secrets & Security
+- Google API credentials stored securely at `/etc/secrets/english100bot.json`
+- Bot token read from environment variable `BOT_TOKEN`
 
-خزّن بيانات التقدّم في Google Sheets بواسطة gspread وملف اعتماد OAuth JSON.
+---
 
-أرسل الدروس يوميًا، مع تقييم آلي كل 10 أيام يرفع المستوى عند النجاح.
-
-تأكد أن التقدّم لا يُفقد بعد إعادة التشغيل أو النقل لجهاز آخر.
-
-📌 هدف البرومبت: بناء بوت تيليغرام احترافي، تعليمي، آلي بالكامل، يدعم حفظ التقدم، ويعمل بسلاسة على السحابة باستخدام Webhook وتقنيات حديثة متوافقة مع إصدارات PTB الجديدة.
+🎉 The project is now fully functional and deployable on Render with stable webhook support and persistent progress tracking.
