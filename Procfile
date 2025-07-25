@@ -1,0 +1,1 @@
+web: gunicorn english_learning_bot:app_flask --bind 0.0.0.0:$PORT
